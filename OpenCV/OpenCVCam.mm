@@ -17,25 +17,21 @@ using namespace cv;
     return instance;
 }
 
-- (id) init
-{
+- (id)init {
     return self;
 }
 
-- (void) start
-{
+- (void)start {
     [self.cam start];
 }
 
-- (void) stop
-{
+- (void)stop {
     [self.cam stop];
 }
 
-- (void) initCam
-{
+- (void)initCam {
     self.cam = [[CvVideoCamera alloc] init];
-    
+
     self.cam.defaultAVCaptureDevicePosition = AVCaptureDevicePositionBack;
     self.cam.defaultAVCaptureSessionPreset = AVCaptureSessionPreset1280x720;
     self.cam.defaultAVCaptureVideoOrientation = AVCaptureVideoOrientationPortrait;
@@ -44,32 +40,19 @@ using namespace cv;
     self.cam.delegate = self;
 }
 
-- (void)processImage:(cv::Mat &)image
-{
-   
-    // Do some OpenCV stuff with the image
-//    Mat image_copy;
-//    cvtColor(image, image_copy, COLOR_BGR2GRAY);
-//    // invert image
-//    bitwise_not(image_copy, image_copy);
-//    //Convert BGR to BGRA (three channel to four channel)
-//    Mat bgr;
-//    cvtColor(image_copy, bgr, COLOR_GRAY2BGR);
-//    cvtColor(bgr, image, COLOR_BGR2BGRA);
+- (void)processImage:(cv::Mat &)image {
 
 // Do some OpenCV stuff with the image
     Mat image_copy;
 
+    int low_H = 0, low_S = 0, low_V = 0;
+    int high_H = 50, high_S = 255, high_V = 255;
     // Convert to gray scale
-    cvtColor(image, image_copy, COLOR_BGR2GRAY);
-    // invert image
-    bitwise_not(image_copy, image_copy);
+    cvtColor(image, image_copy, COLOR_BGR2HSV);
+    inRange(image_copy, Scalar(low_H, low_S, low_V), Scalar(high_H, high_S, high_V), image_copy);
 
     // Lets blur to eliminate noise; feel free to tune the filter size below
     GaussianBlur(image_copy, image_copy, cv::Size(15, 15), 0);
-
-    // Do a canny. Max threshold value below eliminates most noisy edges and detects the quarter for me; more tuning might be needed
-    Canny(image_copy, image_copy, 100, 150);
 
     // Now identify the circles; It works best if I have the quarter with just the floor
     // as the background without my feet.
@@ -86,17 +69,16 @@ using namespace cv;
     //   1. We can repeat this function until we find exactly one circle
     //   2. If no circle is found or if we find multiple circles, after a few attempts,
     // we can ask the user to doublecheck and start again.
-    for( size_t i = 0; i < circles.size(); i++ )
-    {
+    for (size_t i = 0; i < circles.size(); i++) {
         printf("Found %lu circles", circles.size());
         Vec3i c = circles[i];
-        circle( image_copy, cv::Point(c[0], c[1]), c[2], Scalar(255,0,0), 3, CV_AA);
-        circle( image_copy, cv::Point(c[0], c[1]), 2, Scalar(255,0,0), 3, CV_AA);
+        circle(image_copy, cv::Point(c[0], c[1]), c[2], Scalar(255, 0, 0), 3, CV_AA);
+        circle(image_copy, cv::Point(c[0], c[1]), 2, Scalar(255, 0, 0), 3, CV_AA);
     }
 
-    
+
     if (self.delegate != nil) {
-        [self.delegate imageProcessed:[UIImage imageWithCVMat: image_copy]];
+        [self.delegate imageProcessed:[UIImage imageWithCVMat:image_copy]];
     }
 }
 

@@ -28,9 +28,7 @@ class ViewController: UIViewController, OpenCVCamDelegate
 
     @IBAction func start(_ button: UIButton)
     {
-        let showImage = true
-
-        openCVWrapper.stop()
+        openCVWrapper.start()
     }
 
     @IBAction func stop(_ button: UIButton)
